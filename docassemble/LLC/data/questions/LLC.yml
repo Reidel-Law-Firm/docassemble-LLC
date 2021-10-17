@@ -1,0 +1,713 @@
+---
+include:
+  - docassemble.AssemblyLine:al_package.yml
+---
+metadata:
+  title: |
+    LLC
+  short title: |
+    LLC
+  logo: |
+    <img height="50px" class="ma_icon" src="/packagestatic/docassemble.IncorpForm/Reidel_logo.svg"><div class="title"></div>
+  title url: |
+    https://www.reidellawfirm.com/
+---
+features:
+  bootstrap theme: bootstrap.min.css
+  css:
+    - styles.css
+---
+mandatory: True
+comment: |
+  This contains metadata that will not be overwritten if this YAML file is included in another file. Each file gets its own key in the interview_metadata dictionary.
+  Most keys are not currently used at runtime, other than "allowed courts".
+code: |
+  interview_metadata
+  if not defined("interview_metadata['LLC_form']"):
+    interview_metadata.initializeObject("LLC_form")
+    interview_metadata["LLC_form"].update({
+      "al_weaver_version": "1.0.3",
+      "generated on": "2021-07-28",
+      "title": "LLC",
+      "short title": "LLC",
+      "description": "TO DO.",
+      "original_form": "",
+      "allowed courts": [
+      ],
+      "categories": [
+      ],        
+      "logic block variable": "interview_order_LLC_form",
+      "attachment block variable": "LLC_form_attachment",
+      "typical role": "na",
+    })
+---
+code: |
+  interview_short_title = "Form Your LLC in Texas"
+---
+code: |
+  al_form_type = 'other_form'
+---
+objects:
+  - organizer: ALPeopleList.using(ask_number=True,target_number=1)
+  - managers: ALPeopleList.using(there_are_any=True,target_number=1)
+  - users: ALPeopleList.using(ask_number=True,target_number=1)
+  - member: ALPeopleList.using(there_are_any=True)
+  - reimbursement: DAList.using(object_type=DAObject, there_are_any=True)
+---
+sections:
+  - review_LLC_form: Review your answers
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_LLC_form
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = interview_metadata["LLC_form"]["allowed courts"]
+  nav.set_section('review_LLC_form')
+  user_role = 'na'
+  
+  set_progress(11.00)
+  users.gather()
+  users[0].address.address
+  users[0].ssn
+  set_parts(subtitle=str(users))
+  
+  set_progress(22.00)
+  member.there_are_any = True
+  member.gather(complete_attribute = "gather_complete")
+ 
+  set_progress(33.00)
+  if needs_formal_reimbursement:
+     reimbursement[0].what
+     reimbursement_amount = sum(r.amount for r in reimbursement)
+  
+  set_progress(44.00)
+  if has_managers:
+    managers.there_are_any = True
+    managers.gather(complete_attribute = "gather_complete")
+  
+  #organizer.gather()
+  #organizer[0].address.address
+  
+  set_progress(55.00)
+  filing_entity
+  
+  set_progress(66.00)
+
+  set_progress(77.00)
+  supplemental
+
+  set_progress(88.00)
+  #effective_date
+  
+  set_progress(95.00)
+  review_LLC_form
+  
+  interview_order_LLC_form = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  LLC_form_intro
+  interview_order_LLC_form
+  # Save anonymized interview statistics (customize the saved data below)
+  store_variables_snapshot(data={'zip': users[0].address.zip})
+  basic_questions_signature_flow
+  loading_warning_screen
+  set_progress(100)
+  LLC_form_download
+---
+comment: |
+  This question is used to introduce your interview. Please customize
+id: LLC
+continue button field: LLC_form_intro
+question: |
+  LLC
+subquestion: |
+  LLC information. TODO.
+---
+generic object: ALIndividual
+template: users[0].person_type_label
+content: |
+  Are you a person or an organization?
+---
+generic object: ALIndividual
+template: x.business_name_label
+content: |
+  Name of organization
+---
+generic object: ALIndividual
+template: x.business_choice_label
+content: |
+  Organization
+---
+id: users name
+sets:
+    - users[0].name.first
+    - users[0].name.last
+question:  |
+  Your Basic Information
+fields:
+  - code: |
+      users[0].name_fields(person_or_business='unsure')
+  - Who is the authorized person?: authorized_person
+    show if:
+      variable: users[0].person_type
+      is: business
+---
+id: first manager name
+sets:
+    - managers[0].name.first
+    - managers[0].name.last
+question:  |
+  First Manager's Basic Information
+fields:
+  - code: |
+      managers[0].name_fields(person_or_business='unsure')
+---
+id: all other manager names
+sets:
+    - managers[i].name.first
+    - managers[i].name.last
+question:  |
+  ${ capitalize(ordinal(i)) } Manager's Basic Information
+fields:
+  - code: |
+      managers[i].name_fields(person_or_business='unsure')
+---
+generic object: ALIndividual
+code: |
+  x.name.first
+  x.address.address
+  x.gather_complete = True
+---
+generic object: ALIndividual
+template: managers[i].person_type_label
+content: |
+  Is the ${ capitalize(ordinal(i)) } manager a person or an organization?
+---
+generic object: ALIndividual
+template: managers[0].person_type_label
+content: |
+  Is the first manager a person or an organization?
+---
+id: persons address
+generic object: ALIndividual
+question: |
+  What is ${ x.possessive('address') }?
+fields:
+  - Street address: x.address.address
+    address autocomplete: True
+  - Unit: x.address.unit
+    required: False
+  - City: x.address.city
+  - State: x.address.state
+    default:  TX  
+    code: |
+      states_list()   
+  - Zip: x.address.zip
+---
+id: your address
+question: |
+  What is your address?
+subquestion: |
+  What address should the court use to mail papers to you?
+fields:
+  - Street address: users[0].address.address
+    address autocomplete: True
+  - Unit: users[0].address.unit
+    required: False
+  - City: users[0].address.city
+  - State: users[0].address.state
+    datatype: combobox
+    code: |
+      states_list()
+    default: TX      
+  - Zip: users[0].address.zip
+    required: True
+---
+id: ssn
+question: |
+  What is your SSN or ITIN?
+fields:
+  - SSN or ITIN: users[0].ssn
+---
+generic object: ALIndividual
+id: any other members
+question: |
+  Are there any other members?
+subquestion: |
+  % if len(member.elements) > 1:  
+  So far you have told us about ${comma_and_list(member.complete_elements())}.
+  % endif  
+yesno: member.there_is_another 
+---
+generic object: ALIndividual
+id: any other managers
+question: |
+  Are there any other managers?
+subquestion: |
+  % if len(manager.elements) > 1:  
+  So far you have told us about ${comma_and_list(manager.complete_elements())}.
+  % endif  
+yesno: manager.there_is_another 
+---
+generic object: ALIndividual
+question: |
+  Do you need a formal reimbursement?
+yesno: needs_formal_reimbursement
+---
+generic object: ALIndividual
+question: |
+  Will the LLC have managers?
+yesno: has_managers
+---
+id: claims
+question: |
+  Your formal reimbursement
+subquestion: |
+  You said you need a formal reimbursement. 
+  
+  Below you can itemize this reimbursement by selecting "${word("Add another")}".
+fields: 
+  - Describe your formation cost: reimbursement[i].what
+  - How much is this formation cost?: reimbursement[i].amount
+    datatype: currency
+list collect: True
+---
+generic object: ALIndividual
+id: any other managers
+question: |
+  Are there any other managers?
+subquestion: |
+  % if len(manager.elements) > 1:  
+  So far you have told us about ${comma_and_list(manager.complete_elements())}.
+  % endif  
+yesno: manager.there_is_another 
+---
+id: What is the filing entitys name
+question: |
+  What would you like the name of your LLC to be?
+fields:
+  - "Name": filing_entity
+    maxlength: 85
+  - "Secondary name": filing_entity_secondary
+    help: |
+      If the first name if unavailable we will use this secondary name for your corporation.
+---
+id: Supplemental Provisions Information
+question: |
+  Supplemental Provisions/Information
+fields:
+  - "no label": supplemental
+    input type: area
+    maxlength: 935
+    required: False
+#---
+#id: Effective Date
+#question: |
+#  Effective Date
+#fields:
+#  - no label: effective_date
+#    datatype: radio
+#    choices:
+#      - When the document is filed by the secretary of state: effective_SOS
+#      - After the document is filed by the secretary of state, but not more than ninety (90) days from the date of signing: effective_before_90
+#      - Upon the occurrence of a future event or fact: effective_in_future
+#  - "Delayed date": date_effective_before_90
+#    datatype: date
+#    js show if: |
+#      val("effective_date") == "effective_before_90"
+#  - "90th day after date of signing": signing_date_plus_90
+#    datatype: date
+#    js show if: |
+#      val("effective_date") == "effective_in_future"  
+#  - "What event or fact will cause the document to take effect?": effective_event_explanation
+#    datatype: area
+#    maxlength: 252
+#    js show if: |
+#      val("effective_date") == "effective_in_future"  
+---
+id: preview LLC_form
+question: |
+  Preview your form before you sign it
+subquestion: |
+  Here is a preview of the form you will sign on the next page.   
+  
+  ${ al_recipient_bundle.as_pdf(key='preview') }
+
+  Click the image to open it in a new tab. Click the "Make changes" button
+  to edit your answers.
+
+  ${ action_button_html(url_action('review_LLC_form'), label='Make changes', color='info') }
+  
+  Remember to come back to this window to continue and sign your form.
+continue button field: LLC_form_preview_question    
+--- 
+id: loading warning screen
+question: |
+  You have now finished answering all of the interview questions. 
+subquestion: |
+  Select "Next" to download your forms. 
+  
+  It may take a few seconds to load.  
+continue button field: loading_warning_screen
+---
+id: incorp form review screen
+continue button field: review_LLC_form
+question: |
+  Review your answers
+review:
+  - Edit: filing_entity
+    button: |
+      **Name**:
+      ${ filing_entity }
+  - Edit: supplemental
+    button: |
+      **Supplemental**:
+      ${ single_paragraph(supplemental) }
+  - Edit: effective_SOS
+    button: |
+      **Effective sos**:
+      ${ word(yesno(effective_SOS)) }
+  - Edit: effective_before_90
+    button: |
+      **Effective before 90**:
+      ${ word(yesno(effective_before_90)) }
+  - Edit: date_effective_before_90
+    button: |
+      **Date effective before 90**:
+      ${ date_effective_before_90 }
+  - Edit: effective_in_future
+    button: |
+      **Effective in future**:
+      ${ word(yesno(effective_in_future)) }
+  - Edit: signing_date_plus_90
+    button: |
+      **Signing date plus 90**:
+      ${ signing_date_plus_90 }
+  - Edit: effective_event_explanation
+    button: |
+      **Effective event explanation**:
+      > ${ single_paragraph(effective_event_explanation) }
+  - Edit: users.revisit
+    button: |
+      **Registered Agent:**
+
+      % for item in users:
+        1. ${ item.name }, ${ item.address }
+      % endfor
+  - Edit: authorized_person
+    button: |
+      **Authorized Person**:
+      ${ authorized_person }
+  - Edit: manager.revisit
+    button: |
+      **Managers:**
+
+      % for item in manager:
+        1. ${ item.name }, ${ item.address }
+      % endfor
+  - Edit: member.revisit
+    button: |
+      **Members:**
+
+      % for item in member:
+        1. ${ item.name }, ${ item.address }
+      % endfor
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - name: |
+      row_item.name.full() if defined("row_item.name.suffix") else ""
+  - address: |
+      row_item.address.block() if defined("row_item.address.zip") else ""
+edit:
+  - name.suffix
+  - address.zip
+confirm: True
+---
+continue button field: manager.revisit
+question: |
+  Edit manager
+subquestion: |
+  ${ manager.table }
+
+  ${ manager.add_action() }
+---
+table: manager.table
+rows: manager
+columns:
+  - address: |
+      row_item.address.block() if defined("row_item.address.address") else ""
+  - name: |
+      row_item.name.full() if defined("row_item.name.suffix") else ""
+edit:
+  - address.address
+  - name.suffix
+confirm: True
+---
+continue button field: member.revisit
+question: |
+  Edit member
+subquestion: |
+  ${ member.table }
+
+  ${ member.add_action() }
+---
+table: member.table
+rows: member
+columns:
+  - address: |
+      row_item.address.block() if defined("row_item.address.address") else ""
+  - name: |
+      row_item.name.full() if defined("row_item.name.suffix") else ""
+edit:
+  - address.address
+  - name.suffix
+confirm: True
+---
+continue button field: organizer.revisit
+question: |
+  Edit organizer
+subquestion: |
+  ${ organizer.table }
+
+  ${ organizer.add_action() }
+---
+table: organizer.table
+rows: organizer
+columns:
+  - address: |
+      row_item.address.block() if defined("row_item.address.state") else ""
+  - name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - address.state
+  - name.first
+confirm: True
+---
+id: download LLC_form
+event: LLC_form_download
+question: |
+  Your form is ready to download.
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+  
+  View, download and send your form below. Click the "Make changes" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_LLC_form'), label='Make changes', color='info') }
+  
+  ${ al_user_bundle.download_list_html() }
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+  
+
+progress: 100
+---
+code: |
+  signature_fields = ['users[0].signature']
+---
+objects:
+  - LLC_form_attachment: ALDocument.using(title="LLC Form", filename="201_boc.pdf", enabled=True, has_addendum=False)
+  - LLC_form_attachment_addendum: ALDocument.using(title="Addendum", filename="Addendum.pdf", enabled=True, has_addendum=False)
+  - Consent_of_Registered_Agent_attachment: ALDocument.using(title="Consent of registered agent", filename="Consent_of_Registered_Agent.pdf", enabled=True, has_addendum=False)
+  - first_meeting_minutes: ALDocument.using(title="First Meeting Minutes", filename="First_Meeting_Minutes.pdf", enabled=True, has_addendum=False)
+---
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes], filename="LLC_form_package.pdf", title="All forms to download for your records")
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes], filename="LLC_form_package.pdf", title="All forms to download for your records")
+---
+attachment: 
+  - name: LLC_form_attachment_addendum
+    variable name: LLC_form_attachment_addendum[i]  
+    filename: LLC_form_attachment_addendum
+    skip undefined: True
+    docx template file: addendum.docx
+---
+attachment: 
+  - name: first_meeting_minutes
+    variable name: first_meeting_minutes[i]  
+    filename: first_meeting_minutes
+    skip undefined: True
+    docx template file: first_meeting_minutes.docx
+---
+attachments:
+  - name: Consent of Registered Agent attachment
+    filename: Consent_of_Registered_Agent     
+    variable name: Consent_of_Registered_Agent_attachment[i]
+    skip undefined: True
+    pdf template file: Consent_of_Registered_Agent.pdf
+    fields:
+      - "user_name_full": |
+          % if users[0].person_type == "ALIndividual":
+          ${ users[0] }
+          % endif
+      - "user_name": |
+          % if users[0].person_type == "business":
+          ${ users[0] }
+          % endif
+      - "filing_entity": |
+          % if users[0].person_type == "ALIndividual":
+          ${ filing_entity }
+          % endif
+      - "effective_date": |
+          % if users[0].person_type == "ALIndividual":
+          ${ today(format='M/d/YYYY') }
+          % endif
+      - "filing_entity_1": |
+          % if users[0].person_type == "business":
+          ${ filing_entity }
+          % endif
+      - "authorized_person": |
+          % if users[0].person_type == "business":
+          ${ authorized_person }
+          % endif
+      - "effective_date_1": |
+          % if users[0].person_type == "business":
+          ${ today(format='M/d/YYYY') }
+          % endif
+      - "signature0": |
+          % if users[0].person_type == "ALIndividual":
+          ${ users[0].signature if i == 'final' else '' }
+          % endif
+      - "signature1": |
+          % if users[0].person_type == "business":
+          ${ users[0].signature if i == 'final' else '' }
+          % endif
+  - name: incorp form attachment
+    filename: LLC_form     
+    variable name: LLC_form_attachment[i]        
+    skip undefined: True
+    pdf template file: 205_boc.pdf
+    fields:
+      - "filing_entity": ${ filing_entity }
+      - "user_is_organization": ${ users[0].person_type == "business" }
+      - "user_is_individual": ${ users[0].person_type == "ALIndividual" }
+      - "llc_has_managers": ${ has_managers }
+      - "llc_does_not_have_managers": ${ not has_managers }
+      - "user_name": |
+          % if users[0].person_type == "business":
+          ${ users[0] }
+          % endif
+      - "user_name_first": |
+          % if users[0].person_type == "ALIndividual":
+          ${ users[0].name.first }
+          % endif
+      - "user_name_middle": |
+          % if users[0].person_type == "ALIndividual":
+          ${ users[0].name.middle }
+          % endif
+      - "user_name_last": |
+          % if users[0].person_type == "ALIndividual":
+          ${ users[0].name.last }
+          % endif
+      - "user_name_suffix": |
+          % if users[0].person_type == "ALIndividual":
+          ${ users[0].name.suffix }
+          % endif
+      - "user_address_street": ${ users[0].address.address }
+      - "user_address_city": ${ users[0].address.city }
+      - "user_address_zip": ${ users[0].address.zip }
+      - "manager_name_organization": |
+          % if managers[0].person_type == "business":
+          ${ managers[0] }
+          % endif
+      - "manager_name_first": |
+          % if managers[0].person_type == "ALIndividual":
+          ${ managers[0].name.first }
+          % endif
+      - "manager_name_middle": |
+          % if managers[0].person_type == "ALIndividual":
+          ${ managers[0].name.middle }
+          % endif
+      - "manager_name_last": |
+          % if managers[0].person_type == "ALIndividual":
+          ${ managers[0].name.last }
+          % endif
+      - "manager_name_suffix": |
+          % if managers[0].person_type == "ALIndividual":
+          ${ managers[0].name.suffix }
+          % endif
+      - "manager_address_street": ${ managers[0].address.address }
+      - "manager_address_city": ${ managers[0].address.city }
+      - "manager_address_state": ${ managers[0].address.state }
+      - "manager_address_zip": ${ managers[0].address.zip }
+      - "manager_address_country": ${ managers[0].address.country }
+      - "manager1_name_organization": |
+          % if managers[1].person_type == "business":
+          ${ managers[1] }
+          % endif
+      - "manager1_name_first": |
+          % if managers[1].person_type == "ALIndividual":
+          ${ managers[1].name.first }
+          % endif
+      - "manager1_name_middle": |
+          % if managers[1].person_type == "ALIndividual":
+          ${ managers[1].name.middle }
+          % endif
+      - "manager1_name_last": |
+          % if managers[1].person_type == "ALIndividual":
+          ${ managers[1].name.last }
+          % endif
+      - "manager1_name_suffix": |
+          % if managers[1].person_type == "ALIndividual":
+          ${ managers[1].name.suffix }
+          % endif
+      - "manager1_address_street": ${ managers[1].address.address }
+      - "manager1_address_city": ${ managers[1].address.city }
+      - "manager1_address_state": ${ managers[1].address.state }
+      - "manager1_address_zip": ${ managers[1].address.zip }
+      - "manager1_address_country": ${ managers[1].address.country }
+      - "manager2_name_organization": |
+          % if managers[2].person_type == "business":
+          ${ managers[2] }
+          % endif
+      - "manager2_name_first": |
+          % if managers[2].person_type == "ALIndividual":
+          ${ managers[2].name.first }
+          % endif
+      - "manager2_name_middle": |
+          % if managers[2].person_type == "ALIndividual":
+          ${ managers[2].name.middle }
+          % endif
+      - "manager2_name_last": |
+          % if managers[2].person_type == "ALIndividual":
+          ${ managers[2].name.last }
+          % endif
+      - "manager2_name_suffix": |
+          % if managers[2].person_type == "ALIndividual":
+          ${ managers[2].name.suffix }
+          % endif
+      - "manager2_address_street": ${ managers[2].address.address }
+      - "manager2_address_city": ${ managers[2].address.city }
+      - "manager2_address_state": ${ managers[2].address.state }
+      - "manager2_address_zip": ${ managers[2].address.zip }
+      - "manager2_address_country": ${ managers[2].address.country }
+      - "organizer_name_full": |
+          Schuyler Reidel - Reidel Law Firm
+      - "organizer_address_street": | 
+          527 21st St. #90
+      - "organizer_address_city": |
+          Galveston
+      - "organizer_address_state": |
+          Texas
+      - "organizer_address_zip": |
+          77550
+      - "supplemental": ${ supplemental }
+      - "effective_SOS": ${ True }
+      - "effective_event_explanation": ${ effective_event_explanation }
+      - "effective_date": ${ today(format='M/d/YYYY') }
