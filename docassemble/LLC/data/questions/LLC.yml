@@ -179,6 +179,26 @@ fields:
   - code: |
       managers[i].name_fields(person_or_business='unsure')
 ---
+id: first member name
+sets:
+    - member[0].name.first
+    - member[0].name.last
+question:  |
+  First Member's Basic Information
+fields:
+  - code: |
+      member[0].name_fields(person_or_business='unsure')
+---
+id: all other member names
+sets:
+    - member[i].name.first
+    - member[i].name.last
+question:  |
+  ${ capitalize(ordinal(i)) } Member's Basic Information
+fields:
+  - code: |
+      member[i].name_fields(person_or_business='unsure')
+---
 generic object: ALIndividual
 code: |
   x.name.first
@@ -195,6 +215,16 @@ template: managers[0].person_type_label
 content: |
   Is the first manager a person or an organization?
 ---
+generic object: ALIndividual
+template: member[i].person_type_label
+content: |
+  Is the ${ capitalize(ordinal(i)) } member a person or an organization?
+---
+generic object: ALIndividual
+template: member[0].person_type_label
+content: |
+  Is the first member a person or an organization?
+---
 id: persons address
 generic object: ALIndividual
 question: |
@@ -210,6 +240,7 @@ fields:
     code: |
       states_list()   
   - Zip: x.address.zip
+  - Country: x.address.country
 ---
 id: your address
 question: |
@@ -251,10 +282,10 @@ id: any other managers
 question: |
   Are there any other managers?
 subquestion: |
-  % if len(manager.elements) > 1:  
-  So far you have told us about ${comma_and_list(manager.complete_elements())}.
+  % if len(managers.elements) > 1:  
+  So far you have told us about ${comma_and_list(managers.complete_elements())}.
   % endif  
-yesno: manager.there_is_another 
+yesno: managers.there_is_another 
 ---
 generic object: ALIndividual
 question: |
@@ -284,10 +315,10 @@ id: any other managers
 question: |
   Are there any other managers?
 subquestion: |
-  % if len(manager.elements) > 1:  
-  So far you have told us about ${comma_and_list(manager.complete_elements())}.
+  % if len(managers.elements) > 1:  
+  So far you have told us about ${comma_and_list(managers.complete_elements())}.
   % endif  
-yesno: manager.there_is_another 
+yesno: managers.there_is_another 
 ---
 id: What is the filing entitys name
 question: |
@@ -307,30 +338,6 @@ fields:
     input type: area
     maxlength: 935
     required: False
-#---
-#id: Effective Date
-#question: |
-#  Effective Date
-#fields:
-#  - no label: effective_date
-#    datatype: radio
-#    choices:
-#      - When the document is filed by the secretary of state: effective_SOS
-#      - After the document is filed by the secretary of state, but not more than ninety (90) days from the date of signing: effective_before_90
-#      - Upon the occurrence of a future event or fact: effective_in_future
-#  - "Delayed date": date_effective_before_90
-#    datatype: date
-#    js show if: |
-#      val("effective_date") == "effective_before_90"
-#  - "90th day after date of signing": signing_date_plus_90
-#    datatype: date
-#    js show if: |
-#      val("effective_date") == "effective_in_future"  
-#  - "What event or fact will cause the document to take effect?": effective_event_explanation
-#    datatype: area
-#    maxlength: 252
-#    js show if: |
-#      val("effective_date") == "effective_in_future"  
 ---
 id: preview LLC_form
 question: |
@@ -374,26 +381,6 @@ review:
     button: |
       **Effective sos**:
       ${ word(yesno(effective_SOS)) }
-  - Edit: effective_before_90
-    button: |
-      **Effective before 90**:
-      ${ word(yesno(effective_before_90)) }
-  - Edit: date_effective_before_90
-    button: |
-      **Date effective before 90**:
-      ${ date_effective_before_90 }
-  - Edit: effective_in_future
-    button: |
-      **Effective in future**:
-      ${ word(yesno(effective_in_future)) }
-  - Edit: signing_date_plus_90
-    button: |
-      **Signing date plus 90**:
-      ${ signing_date_plus_90 }
-  - Edit: effective_event_explanation
-    button: |
-      **Effective event explanation**:
-      > ${ single_paragraph(effective_event_explanation) }
   - Edit: users.revisit
     button: |
       **Registered Agent:**
@@ -405,11 +392,11 @@ review:
     button: |
       **Authorized Person**:
       ${ authorized_person }
-  - Edit: manager.revisit
+  - Edit: managers.revisit
     button: |
       **Managers:**
 
-      % for item in manager:
+      % for item in managers:
         1. ${ item.name }, ${ item.address }
       % endfor
   - Edit: member.revisit
@@ -440,16 +427,16 @@ edit:
   - address.zip
 confirm: True
 ---
-continue button field: manager.revisit
+continue button field: managers.revisit
 question: |
-  Edit manager
+  Edit managers
 subquestion: |
-  ${ manager.table }
+  ${ managers.table }
 
-  ${ manager.add_action() }
+  ${ managers.add_action() }
 ---
-table: manager.table
-rows: manager
+table: managers.table
+rows: managers
 columns:
   - address: |
       row_item.address.block() if defined("row_item.address.address") else ""
@@ -623,80 +610,185 @@ attachments:
       - "user_address_city": ${ users[0].address.city }
       - "user_address_zip": ${ users[0].address.zip }
       - "manager_name_organization": |
-          % if managers[0].person_type == "business":
+          % if has_managers and managers[0].person_type == "business":
           ${ managers[0] }
+          % elif member[0].person_type == "business":
+          ${ member[0] }
           % endif
       - "manager_name_first": |
-          % if managers[0].person_type == "ALIndividual":
+          % if has_managers and managers[0].person_type == "ALIndividual":
           ${ managers[0].name.first }
+          % elif member[0].person_type == "ALIndividual":
+          ${ member[0].name.first }
           % endif
       - "manager_name_middle": |
-          % if managers[0].person_type == "ALIndividual":
+          % if has_managers and managers[0].person_type == "ALIndividual":
           ${ managers[0].name.middle }
+          % elif member[0].person_type == "ALIndividual":
+          ${ member[0].name.middle }
           % endif
       - "manager_name_last": |
-          % if managers[0].person_type == "ALIndividual":
+          % if has_managers and managers[0].person_type == "ALIndividual":
           ${ managers[0].name.last }
+          % elif member[0].person_type == "ALIndividual":
+          ${ member[0].name.last }
           % endif
       - "manager_name_suffix": |
-          % if managers[0].person_type == "ALIndividual":
+          % if has_managers and managers[0].person_type == "ALIndividual":
           ${ managers[0].name.suffix }
+          % elif member[0].person_type == "ALIndividual":
+          ${ member[0].name.suffix }
           % endif
-      - "manager_address_street": ${ managers[0].address.address }
-      - "manager_address_city": ${ managers[0].address.city }
-      - "manager_address_state": ${ managers[0].address.state }
-      - "manager_address_zip": ${ managers[0].address.zip }
-      - "manager_address_country": ${ managers[0].address.country }
+      - "manager_address_street": |
+          % if has_managers:
+          ${ managers[0].address.address }
+          % else:
+          ${ member[0].address.address }
+          % endif
+      - "manager_address_city": |
+          % if has_managers:
+          ${ managers[0].address.city }
+          % else:
+          ${ member[0].address.city }
+          % endif 
+      - "manager_address_state": |
+          % if has_managers:
+          ${ managers[0].address.state }
+          % else:
+          ${ member[0].address.state }
+          % endif 
+      - "manager_address_zip": |
+          % if has_managers:
+          ${ managers[0].address.zip }
+          % else:
+          ${ member[0].address.zip }
+          % endif 
+      - "manager_address_country": |
+          % if has_managers:
+          ${ managers[0].address.country }
+          % else:
+          ${ member[0].address.country }
+          % endif  
       - "manager1_name_organization": |
-          % if managers[1].person_type == "business":
+          % if has_managers and managers[1].person_type == "business":
           ${ managers[1] }
+          % elif member[1].person_type == "business":
+          ${ member[1] }
           % endif
       - "manager1_name_first": |
-          % if managers[1].person_type == "ALIndividual":
+          % if has_managers and managers[1].person_type == "ALIndividual":
           ${ managers[1].name.first }
+          % elif member[1].person_type == "ALIndividual":
+          ${ member[1].name.first }
           % endif
       - "manager1_name_middle": |
-          % if managers[1].person_type == "ALIndividual":
+          % if has_managers and managers[1].person_type == "ALIndividual":
           ${ managers[1].name.middle }
+          % elif member[1].person_type == "ALIndividual":
+          ${ member[1].name.middle }
           % endif
       - "manager1_name_last": |
-          % if managers[1].person_type == "ALIndividual":
+          % if has_managers and managers[1].person_type == "ALIndividual":
           ${ managers[1].name.last }
+          % elif member[1].person_type == "ALIndividual":
+          ${ member[1].name.last }
           % endif
       - "manager1_name_suffix": |
-          % if managers[1].person_type == "ALIndividual":
+          % if has_managers and managers[1].person_type == "ALIndividual":
           ${ managers[1].name.suffix }
+          % elif member[1].person_type == "ALIndividual":
+          ${ member[1].name.suffix }
           % endif
-      - "manager1_address_street": ${ managers[1].address.address }
-      - "manager1_address_city": ${ managers[1].address.city }
-      - "manager1_address_state": ${ managers[1].address.state }
-      - "manager1_address_zip": ${ managers[1].address.zip }
-      - "manager1_address_country": ${ managers[1].address.country }
+      - "manager1_address_street": |
+          % if has_managers:
+          ${ managers[1].address.address }
+          % else:
+          ${ member[1].address.address }
+          % endif
+      - "manager1_address_city": |
+          % if has_managers:
+          ${ managers[1].address.city }
+          % else:
+          ${ member[1].address.city }
+          % endif
+      - "manager1_address_state": |
+          % if has_managers:
+          ${ managers[1].address.state }
+          % else:
+          ${ member[1].address.state }
+          % endif
+      - "manager1_address_zip": |
+          % if has_managers:
+          ${ managers[1].address.zip }
+          % else:
+          ${ member[1].address.zip }
+          % endif
+      - "manager1_address_country": |
+          % if has_managers:
+          ${ managers[1].address.country }
+          % else:
+          ${ member[1].address.country }
+          % endif
       - "manager2_name_organization": |
-          % if managers[2].person_type == "business":
+          % if has_managers and managers[2].person_type == "business":
           ${ managers[2] }
+          % elif member[2].person_type == "business":
+          ${ member[2] }
           % endif
       - "manager2_name_first": |
-          % if managers[2].person_type == "ALIndividual":
+          % if has_managers and managers[2].person_type == "ALIndividual":
           ${ managers[2].name.first }
+          % elif member[2].person_type == "ALIndividual":
+          ${ member[2].name.first }
           % endif
       - "manager2_name_middle": |
-          % if managers[2].person_type == "ALIndividual":
+          % if has_managers and managers[2].person_type == "ALIndividual":
           ${ managers[2].name.middle }
+          % elif member[2].person_type == "ALIndividual":
+          ${ member[2].name.middle }
           % endif
       - "manager2_name_last": |
-          % if managers[2].person_type == "ALIndividual":
+          % if has_managers and managers[2].person_type == "ALIndividual":
           ${ managers[2].name.last }
+          % elif member[2].person_type == "ALIndividual":
+          ${ member[2].name.last }
           % endif
       - "manager2_name_suffix": |
-          % if managers[2].person_type == "ALIndividual":
+          % if has_managers and managers[2].person_type == "ALIndividual":
           ${ managers[2].name.suffix }
+          % elif member[2].person_type == "ALIndividual":
+          ${ member[2].name.suffix }
           % endif
-      - "manager2_address_street": ${ managers[2].address.address }
-      - "manager2_address_city": ${ managers[2].address.city }
-      - "manager2_address_state": ${ managers[2].address.state }
-      - "manager2_address_zip": ${ managers[2].address.zip }
-      - "manager2_address_country": ${ managers[2].address.country }
+      - "manager2_address_street": |
+          % if has_managers:
+          ${ managers[2].address.address }
+          % else:
+          ${ member[2].address.address }
+          % endif
+      - "manager2_address_city": |
+          % if has_managers:
+          ${ managers[2].address.city }
+          % else:
+          ${ member[2].address.city }
+          % endif
+      - "manager2_address_state": |
+          % if has_managers:
+          ${ managers[2].address.state }
+          % else:
+          ${ member[2].address.state }
+          % endif
+      - "manager2_address_zip": |
+          % if has_managers:
+          ${ managers[2].address.zip }
+          % else:
+          ${ member[2].address.zip }
+          % endif
+      - "manager2_address_country": |
+          % if has_managers:
+          ${ managers[2].address.country }
+          % else:
+          ${ member[2].address.country }
+          % endif
       - "organizer_name_full": |
           Schuyler Reidel - Reidel Law Firm
       - "organizer_address_street": | 
@@ -709,5 +801,4 @@ attachments:
           77550
       - "supplemental": ${ supplemental }
       - "effective_SOS": ${ True }
-      - "effective_event_explanation": ${ effective_event_explanation }
       - "effective_date": ${ today(format='M/d/YYYY') }

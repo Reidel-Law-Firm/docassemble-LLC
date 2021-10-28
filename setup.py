@@ -43,12 +43,12 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.LLC',
-      version='0.0.1',
-      description=(''),
-      long_description='# docassemble.LLC\n\n\n\n## Author\n\nmbonardi@su.suffolk.edu\n\n',
+      version='2.0',
+      description=('LLC'),
+      long_description='# docassemble.LLC\r\n\r\nLLC\r\n\r\n## Schuyler "Rocky" Reidel\r\n\r\nadmin@docs.reidellawfirm.com\r\n\r\n',
       long_description_content_type='text/markdown',
-      author='',
-      author_email='mbonardi@su.suffolk.edu',
+      author='Schuyler "Rocky" Reidel',
+      author_email='admin@docs.reidellawfirm.com',
       license='The MIT License (MIT)',
       url='https://docassemble.org',
       packages=find_packages(),
