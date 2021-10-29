@@ -75,7 +75,7 @@ code: |
   
   set_progress(22.00)
   member.there_are_any = True
-  member.gather(complete_attribute = "gather_complete")
+  member.gather(complete_attribute = "gather_complete1")
  
   set_progress(33.00)
   if needs_formal_reimbursement:
@@ -204,6 +204,21 @@ code: |
   x.name.first
   x.address.address
   x.gather_complete = True
+---
+generic object: ALIndividual
+code: |
+  x.name.first
+  x.address.address
+  x.units
+  x.gather_complete1 = True
+---
+id: member shares
+generic object: ALIndividual
+question: |
+  What is ${ x }'s membership interest percentage or number of units held?
+fields:
+  - Percentage/Units: x.units
+    datatype: integer
 ---
 generic object: ALIndividual
 template: managers[i].person_type_label
@@ -487,6 +502,17 @@ edit:
   - name.first
 confirm: True
 ---
+table: member_ledger_table
+rows: member
+columns:
+  - Name of Member: row_item.name.full()
+  - Place of Residence: row_item.address.on_one_line()
+  - From whom Transferred: |
+      "Original Issue"
+  - Amount Paid: |
+      "N/A"
+  - Membership Interest % (or Number of Units) Held: row_item.units
+---
 id: download LLC_form
 event: LLC_form_download
 question: |
@@ -499,6 +525,8 @@ subquestion: |
   ${ action_button_html(url_action('review_LLC_form'), label='Make changes', color='info') }
   
   ${ al_user_bundle.download_list_html() }
+  
+    [Member's Ledger](${ member_ledger_table.export('member_ledger.xlsx', title='member_ledger').url_for() })
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
   
@@ -513,10 +541,12 @@ objects:
   - LLC_form_attachment_addendum: ALDocument.using(title="Addendum", filename="Addendum.pdf", enabled=True, has_addendum=False)
   - Consent_of_Registered_Agent_attachment: ALDocument.using(title="Consent of registered agent", filename="Consent_of_Registered_Agent.pdf", enabled=True, has_addendum=False)
   - first_meeting_minutes: ALDocument.using(title="First Meeting Minutes", filename="First_Meeting_Minutes.pdf", enabled=True, has_addendum=False)
+  - LLC_operating_agreement: ALDocument.using(title="LLC Operating Agreement", filename="LLC_operating_agreement.pdf", enabled=True, has_addendum=False)
+#  - member_ledger: ALDocument.using(title="Members Ledger", filename="member_ledger", enabled=True, has_addendum=False)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes], filename="LLC_form_package.pdf", title="All forms to download for your records")
-  - al_recipient_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes], filename="LLC_form_package.pdf", title="All forms to download for your records")
+  - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement], filename="LLC_form_package.pdf", title="All forms to download for your records")
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement], filename="LLC_form_package.pdf", title="All forms to download for your records")
 ---
 attachment: 
   - name: LLC_form_attachment_addendum
@@ -524,6 +554,13 @@ attachment:
     filename: LLC_form_attachment_addendum
     skip undefined: True
     docx template file: addendum.docx
+---
+attachment: 
+  - name: LLC_operating_agreement
+    variable name: LLC_operating_agreement[i]  
+    filename: LLC_operating_agreement
+    skip undefined: True
+    docx template file: LLC_operating_agreement.docx
 ---
 attachment: 
   - name: first_meeting_minutes
