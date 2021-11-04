@@ -392,16 +392,14 @@ review:
     button: |
       **Supplemental**:
       ${ single_paragraph(supplemental) }
-  - Edit: effective_SOS
-    button: |
-      **Effective sos**:
-      ${ word(yesno(effective_SOS)) }
   - Edit: users.revisit
     button: |
       **Registered Agent:**
 
+      Name | Address 
+      -----------|------------
       % for item in users:
-        1. ${ item.name }, ${ item.address }
+      ${ item.name } | ${ item.address }
       % endfor
   - Edit: authorized_person
     button: |
@@ -410,16 +408,20 @@ review:
   - Edit: managers.revisit
     button: |
       **Managers:**
-
+      
+      Name | Address 
+      -----------|------------
       % for item in managers:
-        1. ${ item.name }, ${ item.address }
+      ${ item.name } | ${ item.address }
       % endfor
   - Edit: member.revisit
     button: |
       **Members:**
 
+      Name | Address | Units
+      -----------|------------|------------
       % for item in member:
-        1. ${ item.name }, ${ item.address }
+      ${ item.name } | ${ item.address } | ${ item.units }
       % endfor
 ---
 continue button field: users.revisit
