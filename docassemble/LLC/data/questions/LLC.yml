@@ -504,7 +504,7 @@ edit:
   - name.first
 confirm: True
 ---
-table: member_ledger_table
+table: member_ledger.table
 rows: member
 columns:
   - Name of Member: row_item.name.full()
@@ -527,8 +527,6 @@ subquestion: |
   ${ action_button_html(url_action('review_LLC_form'), label='Make changes', color='info') }
   
   ${ al_user_bundle.download_list_html() }
-  
-    [Member's Ledger](${ member_ledger_table.export('member_ledger.xlsx', title='member_ledger').url_for() })
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
   
@@ -544,11 +542,11 @@ objects:
   - Consent_of_Registered_Agent_attachment: ALDocument.using(title="Consent of registered agent", filename="Consent_of_Registered_Agent.pdf", enabled=True, has_addendum=False)
   - first_meeting_minutes: ALDocument.using(title="First Meeting Minutes", filename="First_Meeting_Minutes.pdf", enabled=True, has_addendum=False)
   - LLC_operating_agreement: ALDocument.using(title="LLC Operating Agreement", filename="LLC_operating_agreement.pdf", enabled=True, has_addendum=False)
-#  - member_ledger: ALDocument.using(title="Members Ledger", filename="member_ledger", enabled=True, has_addendum=False)
+  - member_ledger: ALTableDocument.using(title="Members Ledger", filename="ledger", enabled=True)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement], filename="LLC_form_package.pdf", title="All forms to download for your records")
-  - al_recipient_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement], filename="LLC_form_package.pdf", title="All forms to download for your records")
+  - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, member_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, member_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
 ---
 attachment: 
   - name: LLC_form_attachment_addendum
