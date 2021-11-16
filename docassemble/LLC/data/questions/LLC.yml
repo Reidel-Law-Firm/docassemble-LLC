@@ -51,8 +51,8 @@ objects:
   - organizer: ALPeopleList.using(ask_number=True,target_number=1)
   - managers: ALPeopleList.using(there_are_any=True,target_number=1)
   - users: ALPeopleList.using(ask_number=True,target_number=1)
-  - member: ALPeopleList.using(there_are_any=True)
-  - reimbursement: DAList.using(object_type=DAObject, there_are_any=True)
+  - members: ALPeopleList.using(there_are_any=True)
+  - reimbursements: DAList.using(object_type=DAObject, there_are_any=True)
 ---
 sections:
   - review_LLC_form: Review your answers
@@ -74,13 +74,13 @@ code: |
   set_parts(subtitle=str(users))
   
   set_progress(22.00)
-  member.there_are_any = True
-  member.gather(complete_attribute = "gather_complete1")
+  members.there_are_any = True
+  members.gather(complete_attribute = "gather_complete1")
  
   set_progress(33.00)
   if needs_formal_reimbursement:
-     reimbursement[0].what
-     reimbursement_amount = sum(r.amount for r in reimbursement)
+     reimbursements[0].what
+     reimbursement_amount = sum(r.amount for r in reimbursements)
   
   set_progress(44.00)
   if has_managers:
@@ -210,7 +210,26 @@ code: |
   x.name.first
   x.address.address
   x.units
+  if x.ready_to_sign: 
+    x.signature
   x.gather_complete1 = True
+---
+id: shareholder ready to sign
+generic object: ALIndividual
+question: |
+  Is ${x} ready to sign?
+yesno: x.ready_to_sign
+---
+id: persons signature
+generic object: ALIndividual
+question: |
+  ${x}, please sign below
+subquestion: |
+  You can select "Next" and have ${x} sign later.
+signature: x.signature
+required: False
+under: |
+  ${x}
 ---
 id: member shares
 generic object: ALIndividual
@@ -231,12 +250,12 @@ content: |
   Is the first manager a person or an organization?
 ---
 generic object: ALIndividual
-template: member[i].person_type_label
+template: members[i].person_type_label
 content: |
   Is the ${ capitalize(ordinal(i)) } member a person or an organization?
 ---
 generic object: ALIndividual
-template: member[0].person_type_label
+template: members[0].person_type_label
 content: |
   Is the first member a person or an organization?
 ---
@@ -287,10 +306,10 @@ id: any other members
 question: |
   Are there any other members?
 subquestion: |
-  % if len(member.elements) > 1:  
-  So far you have told us about ${comma_and_list(member.complete_elements())}.
+  % if len(members.elements) > 1:  
+  So far you have told us about ${comma_and_list(members.complete_elements())}.
   % endif  
-yesno: member.there_is_another 
+yesno: members.there_is_another 
 ---
 generic object: ALIndividual
 id: any other managers
@@ -320,8 +339,8 @@ subquestion: |
   
   Below you can itemize this reimbursement by selecting "${word("Add another")}".
 fields: 
-  - Describe your formation cost: reimbursement[i].what
-  - How much is this formation cost?: reimbursement[i].amount
+  - Describe your formation cost: reimbursements[i].what
+  - How much is this formation cost?: reimbursements[i].amount
     datatype: currency
 list collect: True
 ---
@@ -414,13 +433,13 @@ review:
       % for item in managers:
       ${ item.name } | ${ item.address }
       % endfor
-  - Edit: member.revisit
+  - Edit: members.revisit
     button: |
       **Members:**
 
       Name | Address | Units
       -----------|------------|------------
-      % for item in member:
+      % for item in members:
       ${ item.name } | ${ item.address } | ${ item.units }
       % endfor
 ---
@@ -464,16 +483,16 @@ edit:
   - name.suffix
 confirm: True
 ---
-continue button field: member.revisit
+continue button field: members.revisit
 question: |
-  Edit member
+  Edit members
 subquestion: |
-  ${ member.table }
+  ${ members.table }
 
-  ${ member.add_action() }
+  ${ members.add_action() }
 ---
-table: member.table
-rows: member
+table: members.table
+rows: members
 columns:
   - address: |
       row_item.address.block() if defined("row_item.address.address") else ""
@@ -504,8 +523,8 @@ edit:
   - name.first
 confirm: True
 ---
-table: member_ledger.table
-rows: member
+table: members_ledger.table
+rows: members
 columns:
   - Name of Member: row_item.name.full()
   - Place of Residence: row_item.address.on_one_line()
@@ -542,11 +561,11 @@ objects:
   - Consent_of_Registered_Agent_attachment: ALDocument.using(title="Consent of registered agent", filename="Consent_of_Registered_Agent.pdf", enabled=True, has_addendum=False)
   - first_meeting_minutes: ALDocument.using(title="First Meeting Minutes", filename="First_Meeting_Minutes.pdf", enabled=True, has_addendum=False)
   - LLC_operating_agreement: ALDocument.using(title="LLC Operating Agreement", filename="LLC_operating_agreement.pdf", enabled=True, has_addendum=False)
-  - member_ledger: ALTableDocument.using(title="Members Ledger", filename="ledger", enabled=True)
+  - members_ledger: ALTableDocument.using(title="Members Ledger", filename="ledger", enabled=True)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, member_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
-  - al_recipient_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, member_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
+  - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, members_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, members_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
 ---
 attachment: 
   - name: LLC_form_attachment_addendum
@@ -649,182 +668,182 @@ attachments:
       - "manager_name_organization": |
           % if has_managers and managers[0].person_type == "business":
           ${ managers[0] }
-          % elif member[0].person_type == "business":
-          ${ member[0] }
+          % elif members[0].person_type == "business":
+          ${ members[0] }
           % endif
       - "manager_name_first": |
           % if has_managers and managers[0].person_type == "ALIndividual":
           ${ managers[0].name.first }
-          % elif member[0].person_type == "ALIndividual":
-          ${ member[0].name.first }
+          % elif members[0].person_type == "ALIndividual":
+          ${ members[0].name.first }
           % endif
       - "manager_name_middle": |
           % if has_managers and managers[0].person_type == "ALIndividual":
           ${ managers[0].name.middle }
-          % elif member[0].person_type == "ALIndividual":
-          ${ member[0].name.middle }
+          % elif members[0].person_type == "ALIndividual":
+          ${ members[0].name.middle }
           % endif
       - "manager_name_last": |
           % if has_managers and managers[0].person_type == "ALIndividual":
           ${ managers[0].name.last }
-          % elif member[0].person_type == "ALIndividual":
-          ${ member[0].name.last }
+          % elif members[0].person_type == "ALIndividual":
+          ${ members[0].name.last }
           % endif
       - "manager_name_suffix": |
           % if has_managers and managers[0].person_type == "ALIndividual":
           ${ managers[0].name.suffix }
-          % elif member[0].person_type == "ALIndividual":
-          ${ member[0].name.suffix }
+          % elif members[0].person_type == "ALIndividual":
+          ${ members[0].name.suffix }
           % endif
       - "manager_address_street": |
           % if has_managers:
           ${ managers[0].address.address }
           % else:
-          ${ member[0].address.address }
+          ${ members[0].address.address }
           % endif
       - "manager_address_city": |
           % if has_managers:
           ${ managers[0].address.city }
           % else:
-          ${ member[0].address.city }
+          ${ members[0].address.city }
           % endif 
       - "manager_address_state": |
           % if has_managers:
           ${ managers[0].address.state }
           % else:
-          ${ member[0].address.state }
+          ${ members[0].address.state }
           % endif 
       - "manager_address_zip": |
           % if has_managers:
           ${ managers[0].address.zip }
           % else:
-          ${ member[0].address.zip }
+          ${ members[0].address.zip }
           % endif 
       - "manager_address_country": |
           % if has_managers:
           ${ managers[0].address.country }
           % else:
-          ${ member[0].address.country }
+          ${ members[0].address.country }
           % endif  
       - "manager1_name_organization": |
           % if has_managers and managers[1].person_type == "business":
           ${ managers[1] }
-          % elif member[1].person_type == "business":
-          ${ member[1] }
+          % elif members[1].person_type == "business":
+          ${ members[1] }
           % endif
       - "manager1_name_first": |
           % if has_managers and managers[1].person_type == "ALIndividual":
           ${ managers[1].name.first }
-          % elif member[1].person_type == "ALIndividual":
-          ${ member[1].name.first }
+          % elif members[1].person_type == "ALIndividual":
+          ${ members[1].name.first }
           % endif
       - "manager1_name_middle": |
           % if has_managers and managers[1].person_type == "ALIndividual":
           ${ managers[1].name.middle }
-          % elif member[1].person_type == "ALIndividual":
-          ${ member[1].name.middle }
+          % elif members[1].person_type == "ALIndividual":
+          ${ members[1].name.middle }
           % endif
       - "manager1_name_last": |
           % if has_managers and managers[1].person_type == "ALIndividual":
           ${ managers[1].name.last }
-          % elif member[1].person_type == "ALIndividual":
-          ${ member[1].name.last }
+          % elif members[1].person_type == "ALIndividual":
+          ${ members[1].name.last }
           % endif
       - "manager1_name_suffix": |
           % if has_managers and managers[1].person_type == "ALIndividual":
           ${ managers[1].name.suffix }
-          % elif member[1].person_type == "ALIndividual":
-          ${ member[1].name.suffix }
+          % elif members[1].person_type == "ALIndividual":
+          ${ members[1].name.suffix }
           % endif
       - "manager1_address_street": |
           % if has_managers:
           ${ managers[1].address.address }
           % else:
-          ${ member[1].address.address }
+          ${ members[1].address.address }
           % endif
       - "manager1_address_city": |
           % if has_managers:
           ${ managers[1].address.city }
           % else:
-          ${ member[1].address.city }
+          ${ members[1].address.city }
           % endif
       - "manager1_address_state": |
           % if has_managers:
           ${ managers[1].address.state }
           % else:
-          ${ member[1].address.state }
+          ${ members[1].address.state }
           % endif
       - "manager1_address_zip": |
           % if has_managers:
           ${ managers[1].address.zip }
           % else:
-          ${ member[1].address.zip }
+          ${ members[1].address.zip }
           % endif
       - "manager1_address_country": |
           % if has_managers:
           ${ managers[1].address.country }
           % else:
-          ${ member[1].address.country }
+          ${ members[1].address.country }
           % endif
       - "manager2_name_organization": |
           % if has_managers and managers[2].person_type == "business":
           ${ managers[2] }
-          % elif member[2].person_type == "business":
-          ${ member[2] }
+          % elif members[2].person_type == "business":
+          ${ members[2] }
           % endif
       - "manager2_name_first": |
           % if has_managers and managers[2].person_type == "ALIndividual":
           ${ managers[2].name.first }
           % elif member[2].person_type == "ALIndividual":
-          ${ member[2].name.first }
+          ${ members[2].name.first }
           % endif
       - "manager2_name_middle": |
           % if has_managers and managers[2].person_type == "ALIndividual":
           ${ managers[2].name.middle }
-          % elif member[2].person_type == "ALIndividual":
-          ${ member[2].name.middle }
+          % elif members[2].person_type == "ALIndividual":
+          ${ members[2].name.middle }
           % endif
       - "manager2_name_last": |
           % if has_managers and managers[2].person_type == "ALIndividual":
           ${ managers[2].name.last }
-          % elif member[2].person_type == "ALIndividual":
-          ${ member[2].name.last }
+          % elif members[2].person_type == "ALIndividual":
+          ${ members[2].name.last }
           % endif
       - "manager2_name_suffix": |
           % if has_managers and managers[2].person_type == "ALIndividual":
           ${ managers[2].name.suffix }
-          % elif member[2].person_type == "ALIndividual":
-          ${ member[2].name.suffix }
+          % elif members[2].person_type == "ALIndividual":
+          ${ members[2].name.suffix }
           % endif
       - "manager2_address_street": |
           % if has_managers:
           ${ managers[2].address.address }
           % else:
-          ${ member[2].address.address }
+          ${ members[2].address.address }
           % endif
       - "manager2_address_city": |
           % if has_managers:
           ${ managers[2].address.city }
           % else:
-          ${ member[2].address.city }
+          ${ members[2].address.city }
           % endif
       - "manager2_address_state": |
           % if has_managers:
           ${ managers[2].address.state }
           % else:
-          ${ member[2].address.state }
+          ${ members[2].address.state }
           % endif
       - "manager2_address_zip": |
           % if has_managers:
           ${ managers[2].address.zip }
           % else:
-          ${ member[2].address.zip }
+          ${ members[2].address.zip }
           % endif
       - "manager2_address_country": |
           % if has_managers:
           ${ managers[2].address.country }
           % else:
-          ${ member[2].address.country }
+          ${ members[2].address.country }
           % endif
       - "organizer_name_full": |
           Schuyler Reidel - Reidel Law Firm
