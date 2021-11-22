@@ -210,7 +210,26 @@ code: |
   x.name.first
   x.address.address
   x.units
+  if x.ready_to_sign: 
+    x.signature
   x.gather_complete1 = True
+---
+id: shareholder ready to sign
+generic object: ALIndividual
+question: |
+  Is ${x} ready to sign?
+yesno: x.ready_to_sign
+---
+id: persons signature
+generic object: ALIndividual
+question: |
+  ${x}, please sign below
+subquestion: |
+  You can select "Next" and have ${x} sign later.
+signature: x.signature
+required: False
+under: |
+  ${x}
 ---
 id: member shares
 generic object: ALIndividual
