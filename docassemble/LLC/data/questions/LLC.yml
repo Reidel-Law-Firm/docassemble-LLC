@@ -269,6 +269,8 @@ fields:
       states_list()   
   - Zip: x.address.zip
   - Country: x.address.country
+    code: countries_list()
+    default: US
 ---
 id: your address
 question: |
