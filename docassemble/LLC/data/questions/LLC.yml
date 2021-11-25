@@ -179,25 +179,25 @@ fields:
   - code: |
       managers[i].name_fields(person_or_business='unsure')
 ---
-id: first member name
+id: first members name
 sets:
-    - member[0].name.first
-    - member[0].name.last
+    - members[0].name.first
+    - members[0].name.last
 question:  |
   First Member's Basic Information
 fields:
   - code: |
-      member[0].name_fields(person_or_business='unsure')
+      members[0].name_fields(person_or_business='unsure')
 ---
-id: all other member names
+id: all other members names
 sets:
-    - member[i].name.first
-    - member[i].name.last
+    - members[i].name.first
+    - members[i].name.last
 question:  |
   ${ capitalize(ordinal(i)) } Member's Basic Information
 fields:
   - code: |
-      member[i].name_fields(person_or_business='unsure')
+      members[i].name_fields(person_or_business='unsure')
 ---
 generic object: ALIndividual
 code: |
@@ -231,7 +231,7 @@ required: False
 under: |
   ${x}
 ---
-id: member shares
+id: members shares
 generic object: ALIndividual
 question: |
   What is ${ x }'s membership interest percentage or number of units held?
@@ -794,7 +794,7 @@ attachments:
       - "manager2_name_first": |
           % if has_managers and managers[2].person_type == "ALIndividual":
           ${ managers[2].name.first }
-          % elif member[2].person_type == "ALIndividual":
+          % elif members[2].person_type == "ALIndividual":
           ${ members[2].name.first }
           % endif
       - "manager2_name_middle": |
@@ -845,7 +845,9 @@ attachments:
           % else:
           ${ members[2].address.country }
           % endif
-      - "organizer_name_full": |
+      - "organizer_name_full1": |
+          Schuyler Reidel - Reidel Law Firm
+      - "organizer_name_full2": |
           Schuyler Reidel - Reidel Law Firm
       - "organizer_address_street": | 
           527 21st St. #90
