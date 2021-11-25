@@ -556,36 +556,45 @@ code: |
   signature_fields = ['users[0].signature']
 ---
 objects:
-  - LLC_form_attachment: ALDocument.using(title="LLC Form", filename="201_boc.pdf", enabled=True, has_addendum=False)
-  - LLC_form_attachment_addendum: ALDocument.using(title="Addendum", filename="Addendum.pdf", enabled=True, has_addendum=False)
+  - LLC_form_attachment: ALDocument.using(title="LLC Form", filename="201_boc.pdf", enabled=True, has_addendum=True)
+  - LLC_extra_info: ALDocument.using(title="Addendum", filename="Addendum.pdf", enabled=True, has_addendum=False)
   - Consent_of_Registered_Agent_attachment: ALDocument.using(title="Consent of registered agent", filename="Consent_of_Registered_Agent.pdf", enabled=True, has_addendum=False)
   - first_meeting_minutes: ALDocument.using(title="First Meeting Minutes", filename="First_Meeting_Minutes.pdf", enabled=True, has_addendum=False)
   - LLC_operating_agreement: ALDocument.using(title="LLC Operating Agreement", filename="LLC_operating_agreement.pdf", enabled=True, has_addendum=False)
   - members_ledger: ALTableDocument.using(title="Members Ledger", filename="ledger", enabled=True)
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, members_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
-  - al_recipient_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_form_attachment_addendum, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, members_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
+  - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_extra_info, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, members_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_extra_info, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, members_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
+---
+generic object: ALDocument
+attachment:
+  variable name: LLC_form_attachment.addendum
+  docx template file: LLC_form_attachment_addendum.docx
+---
+code: |
+  LLC_form_attachment.overflow_fields['managers'].overflow_trigger = 3
+  LLC_form_attachment.overflow_fields.gathered = True
 ---
 attachment: 
-  - name: LLC_form_attachment_addendum
-    variable name: LLC_form_attachment_addendum[i]  
-    filename: LLC_form_attachment_addendum
-    skip undefined: True
-    docx template file: addendum.docx
+  - name: LLC_extra_info
+    variable name: LLC_extra_info[i]  
+    filename: LLC_extra_info
+    #skip undefined: True
+    docx template file: LLC_extra_info.docx
 ---
 attachment: 
   - name: LLC_operating_agreement
     variable name: LLC_operating_agreement[i]  
     filename: LLC_operating_agreement
-    skip undefined: True
+    #skip undefined: True
     docx template file: LLC_operating_agreement.docx
 ---
 attachment: 
   - name: first_meeting_minutes
     variable name: first_meeting_minutes[i]  
     filename: first_meeting_minutes
-    skip undefined: True
+    #skip undefined: True
     docx template file: first_meeting_minutes.docx
 ---
 attachments:
