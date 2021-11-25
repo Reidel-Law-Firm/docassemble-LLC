@@ -87,19 +87,11 @@ code: |
     managers.there_are_any = True
     managers.gather(complete_attribute = "gather_complete")
   
-  #organizer.gather()
-  #organizer[0].address.address
-  
   set_progress(55.00)
   filing_entity
-  
-  set_progress(66.00)
 
   set_progress(77.00)
   supplemental
-
-  set_progress(88.00)
-  #effective_date
   
   set_progress(95.00)
   review_LLC_form
@@ -203,6 +195,8 @@ generic object: ALIndividual
 code: |
   x.name.first
   x.address.address
+  if x.ready_to_sign: 
+    x.signature
   x.gather_complete = True
 ---
 generic object: ALIndividual
@@ -574,6 +568,7 @@ attachment:
 ---
 code: |
   LLC_form_attachment.overflow_fields['managers'].overflow_trigger = 3
+  LLC_form_attachment.overflow_fields['members'].overflow_trigger = 3
   LLC_form_attachment.overflow_fields.gathered = True
 ---
 attachment: 
