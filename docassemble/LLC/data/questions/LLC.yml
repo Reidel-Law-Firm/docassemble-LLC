@@ -74,6 +74,10 @@ code: |
   set_parts(subtitle=str(users))
   
   set_progress(22.00)
+  if has_managers:
+    managers.there_are_any = True
+    managers.gather(complete_attribute = "gather_complete")
+    
   members.there_are_any = True
   members.gather(complete_attribute = "gather_complete1")
  
@@ -81,11 +85,6 @@ code: |
   if needs_formal_reimbursement:
      reimbursements[0].what
      reimbursement_amount = sum(r.amount for r in reimbursements)
-  
-  set_progress(44.00)
-  if has_managers:
-    managers.there_are_any = True
-    managers.gather(complete_attribute = "gather_complete")
   
   set_progress(55.00)
   filing_entity
