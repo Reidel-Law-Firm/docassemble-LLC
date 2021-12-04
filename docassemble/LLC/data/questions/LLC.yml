@@ -194,8 +194,8 @@ generic object: ALIndividual
 code: |
   x.name.first
   x.address.address
-  if x.ready_to_sign: 
-    x.signature
+  #if x.ready_to_sign: 
+  #  x.signature
   x.gather_complete = True
 ---
 generic object: ALIndividual
@@ -203,8 +203,8 @@ code: |
   x.name.first
   x.address.address
   x.units
-  if x.ready_to_sign: 
-    x.signature
+  #if x.ready_to_sign: 
+  #  x.signature
   x.gather_complete1 = True
 ---
 id: shareholder ready to sign
@@ -548,7 +548,7 @@ subquestion: |
 progress: 100
 ---
 code: |
-  signature_fields = ['users[0].signature']
+  signature_fields = ["users[0].signature"] + [sig.attr_name('signature') for sig in managers + members if sig.ready_to_sign]
 ---
 objects:
   - LLC_form_attachment: ALDocument.using(title="LLC Form", filename="201_boc.pdf", enabled=True, has_addendum=True)
