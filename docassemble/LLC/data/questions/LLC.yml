@@ -18,9 +18,6 @@ features:
     - styles.css
 ---
 mandatory: True
-comment: |
-  This contains metadata that will not be overwritten if this YAML file is included in another file. Each file gets its own key in the interview_metadata dictionary.
-  Most keys are not currently used at runtime, other than "allowed courts".
 code: |
   interview_metadata
   if not defined("interview_metadata['LLC_form']"):
@@ -53,13 +50,12 @@ objects:
   - users: ALPeopleList.using(ask_number=True,target_number=1)
   - members: ALPeopleList.using(there_are_any=True)
   - reimbursements: DAList.using(object_type=DAObject, there_are_any=True)
+  - relationship_people_choices: DAList.using(auto_gather=False)
 ---
 sections:
   - review_LLC_form: Review your answers
 ---
 #################### Interview order #####################
-comment: |
-  Controls order and branching logic for questions specific to this form
 id: interview_order_LLC_form
 code: |
   # Set the allowed courts for this interview
@@ -98,9 +94,6 @@ code: |
   interview_order_LLC_form = True
 ---
 ###################### Main order ######################
-comment: |
-  This block includes the logic for standalone interviews.
-  Delete mandatory: True to include in another interview
 mandatory: True
 code: |
   LLC_form_intro
@@ -138,64 +131,61 @@ content: |
 ---
 id: users name
 sets:
-    - users[0].name.first
-    - users[0].name.last
+  - users[0].name.first
+  - users[0].name.last
 question:  |
   Your Basic Information
 fields:
   - code: |
       users[0].name_fields(person_or_business='unsure')
+  - code: |
+      users[0].address_fields(show_country=True)
   - Who is the authorized person?: authorized_person
     show if:
       variable: users[0].person_type
       is: business
 ---
-id: first manager name
-sets:
-    - managers[0].name.first
-    - managers[0].name.last
-question:  |
-  First Manager's Basic Information
-fields:
-  - code: |
-      managers[0].name_fields(person_or_business='unsure')
+reconsider: True
+code: |
+  relationship_people_choices.clear()
+  relationship_people_choices.extend(managers.complete_elements())  
+  relationship_people_choices.extend(members.complete_elements())
+  relationship_people_choices.extend(relationship_people_choices.complete_elements())
+  relationship_people_choices.gathered = True
 ---
-id: all other manager names
+id: managers names
 sets:
-    - managers[i].name.first
-    - managers[i].name.last
+  - managers[i].name.first
+  - managers[i].name.last
 question:  |
   ${ capitalize(ordinal(i)) } Manager's Basic Information
 fields:
   - code: |
       managers[i].name_fields(person_or_business='unsure')
----
-id: first members name
-sets:
-    - members[0].name.first
-    - members[0].name.last
-question:  |
-  First Member's Basic Information
-fields:
   - code: |
-      members[0].name_fields(person_or_business='unsure')
+      managers[i].address_fields(show_country=True)
 ---
-id: all other members names
+id: members names
 sets:
-    - members[i].name.first
-    - members[i].name.last
+  - members[i].name.first
+  - members[i].name.last
 question:  |
   ${ capitalize(ordinal(i)) } Member's Basic Information
 fields:
+  - Existing person: members[i]
+    datatype: object
+    choices: relationship_people_choices
+    disable others: True
+    exclude: members.complete_elements()
   - code: |
       members[i].name_fields(person_or_business='unsure')
+  - code: |
+      members[i].address_fields(show_country=True)
 ---
 generic object: ALIndividual
 code: |
   x.name.first
   x.address.address
-  #if x.ready_to_sign: 
-  #  x.signature
   x.gather_complete = True
 ---
 generic object: ALIndividual
@@ -203,11 +193,9 @@ code: |
   x.name.first
   x.address.address
   x.units
-  #if x.ready_to_sign: 
-  #  x.signature
   x.gather_complete1 = True
 ---
-id: shareholder ready to sign
+id: ready to sign
 generic object: ALIndividual
 question: |
   Is ${x} ready to sign?
@@ -238,57 +226,9 @@ content: |
   Is the ${ capitalize(ordinal(i)) } manager a person or an organization?
 ---
 generic object: ALIndividual
-template: managers[0].person_type_label
-content: |
-  Is the first manager a person or an organization?
----
-generic object: ALIndividual
 template: members[i].person_type_label
 content: |
   Is the ${ capitalize(ordinal(i)) } member a person or an organization?
----
-generic object: ALIndividual
-template: members[0].person_type_label
-content: |
-  Is the first member a person or an organization?
----
-id: persons address
-generic object: ALIndividual
-question: |
-  What is ${ x.possessive('address') }?
-fields:
-  - Street address: x.address.address
-    address autocomplete: True
-  - Unit: x.address.unit
-    required: False
-  - City: x.address.city
-  - State: x.address.state
-    default:  TX  
-    code: |
-      states_list()   
-  - Zip: x.address.zip
-  - Country: x.address.country
-    code: countries_list()
-    default: US
----
-id: your address
-question: |
-  What is your address?
-subquestion: |
-  What address should the court use to mail papers to you?
-fields:
-  - Street address: users[0].address.address
-    address autocomplete: True
-  - Unit: users[0].address.unit
-    required: False
-  - City: users[0].address.city
-  - State: users[0].address.state
-    datatype: combobox
-    code: |
-      states_list()
-    default: TX      
-  - Zip: users[0].address.zip
-    required: True
 ---
 id: ssn
 question: |
@@ -548,7 +488,7 @@ subquestion: |
 progress: 100
 ---
 code: |
-  signature_fields = ["users[0].signature"] + [sig.attr_name('signature') for sig in managers + members if sig.ready_to_sign]
+  signature_fields = ["users[0].signature"] + [sig.attr_name('signature') for sig in members if sig.ready_to_sign]
 ---
 objects:
   - LLC_form_attachment: ALDocument.using(title="LLC Form", filename="201_boc.pdf", enabled=True, has_addendum=True)
@@ -568,7 +508,8 @@ attachment:
   docx template file: LLC_form_attachment_addendum.docx
 ---
 code: |
-  LLC_form_attachment.overflow_fields['managers'].overflow_trigger = 3
+  if has_managers:
+    LLC_form_attachment.overflow_fields['managers'].overflow_trigger = 3
   LLC_form_attachment.overflow_fields['members'].overflow_trigger = 3
   LLC_form_attachment.overflow_fields.gathered = True
 ---
