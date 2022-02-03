@@ -800,7 +800,7 @@ attachments:
       - "organizer_address_city": |
           Galveston
       - "organizer_address_state": |
-          Texas
+          TX
       - "organizer_address_zip": |
           77550
       - "supplemental": ${ supplemental }
