@@ -2,6 +2,9 @@
 include:
   - docassemble.AssemblyLine:al_package.yml
 ---
+modules:
+  - .publish_to_webdav
+---
 metadata:
   title: |
     LLC
@@ -91,7 +94,7 @@ code: |
   set_progress(95.00)
   review_LLC_form
   
-  interview_order_LLC_form = True
+  interview_order_LLC_form = True  
 ---
 ###################### Main order ######################
 mandatory: True
@@ -103,7 +106,16 @@ code: |
   basic_questions_signature_flow
   loading_warning_screen
   set_progress(100)
+  LLC_form_publish
   LLC_form_download
+---
+code: |
+  new_folder = get_new_bundle_path_name(al_recipient_bundle, filing_entity)
+  publish_to_webdav(al_recipient_bundle, 
+                    path = "/files/docassemble/To Be Filed", 
+                    new_folder = new_folder
+                    )
+  LLC_form_publish = True
 ---
 comment: |
   This question is used to introduce your interview. Please customize
