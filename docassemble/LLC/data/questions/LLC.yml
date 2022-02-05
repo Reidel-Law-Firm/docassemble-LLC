@@ -3,7 +3,7 @@ include:
   - docassemble.AssemblyLine:al_package.yml
 ---
 modules:
-  - .publish_to_webdav
+  - docassemble.ReidelTheme.publish_to_webdav
 ---
 metadata:
   title: |
@@ -111,11 +111,19 @@ code: |
 ---
 code: |
   new_folder = get_new_bundle_path_name(al_recipient_bundle, filing_entity)
-  publish_to_webdav(al_recipient_bundle, 
-                    path = "/files/docassemble/To Be Filed", 
-                    new_folder = new_folder
-                    )
-  LLC_form_publish = True
+  for document in al_recipient_bundle:
+    document['final'].path()
+    document.filename
+
+  try:
+    publish_to_webdav(al_recipient_bundle, 
+                      path = "/files/docassemble/To Be Filed", 
+                      new_folder = new_folder,
+                      )
+    LLC_form_publish = True
+  except Exception as e:
+    publish_error = str(e)
+    LLC_form_publish = False
 ---
 comment: |
   This question is used to introduce your interview. Please customize
@@ -496,8 +504,25 @@ subquestion: |
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
   
+  % if LLC_form_publish:
+  A copy of your form has been delivered to Reidel Law Offices.
+  % else:
+  
+  #### Something went wrong when we tried to deliver a copy of your documents
+  to Reidel Law Offices. 
+  
+  ${ collapse_template( LLC_form_publish_error_template ) }
+  % endif
 
 progress: 100
+---
+template: LLC_form_publish_error_template
+subject: |
+  Review error message
+content: |
+  ```
+  ${ str(publish_error) }
+  ```
 ---
 code: |
   signature_fields = ["users[0].signature"] + [sig.attr_name('signature') for sig in members if sig.ready_to_sign]
