@@ -231,6 +231,51 @@ required: False
 under: |
   ${x}
 ---
+# Triggers some questions to ask for signatures on either desktop or mobile
+# Allows sending via text/email
+id: basic questions signature flow control
+code: |
+  if started_on_phone:
+    saw_signature_choice = True
+    users[0].signature
+    for member in members:
+      if member.ready_to_sign:
+        member.signature
+    # Add in logic for when we need additional signatures
+  else: 
+    # Three branches:
+    # 1. Decided to sign on the PC
+    # 2. Sent someone a link to sign the form
+    # 3. Used the QR code
+    saw_signature_choice
+    # Branch 1: PC
+    if signature_choice =='this device':
+      users[0].signature
+      for member in members:
+        if member.ready_to_sign:
+          member.signature
+    # Check for Branch 2 or 3
+    elif signature_choice == 'phone':
+      saw_signature_qrcode
+      # User will click next. link_cell will only be defined if they chose the texting option
+      if defined('link_cell') and link_cell and task_not_yet_performed('send signature link'): 
+        # They used the text option
+        send_sms(task='send signature link', to=link_cell,template=interview_link)
+        signature_wait_screen
+        users[0].signature
+        for member in members:
+          if member.ready_to_sign:
+            member.signature        
+      else: # Branch 3: They used the QR Code. No special screen, just continue
+        users[0].signature
+        for member in members:
+          if member.ready_to_sign:
+            member.signature      
+      # Show the follow-up either way
+      if device().is_mobile:
+        signature_phone_followup
+  basic_questions_signature_flow = True
+---
 id: members shares
 generic object: ALIndividual
 question: |
@@ -365,6 +410,7 @@ review:
     button: |
       **Supplemental**:
       ${ single_paragraph(supplemental) }
+    show if: supplemental
   - Edit: users.revisit
     button: |
       **Registered Agent:**
