@@ -15,6 +15,10 @@ metadata:
   title url: |
     https://www.reidellawfirm.com/
 ---
+default screen parts:
+  logo: |
+    <img height="50px" class="ma_icon" src="/packagestatic/docassemble.IncorpForm/Reidel_logo.svg"><div class="title"></div>
+---
 features:
   bootstrap theme: bootstrap.min.css
   css:
