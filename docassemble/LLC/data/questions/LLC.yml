@@ -76,6 +76,8 @@ code: |
   users[0].ssn
   set_parts(subtitle=str(users))
   
+  business[0].address.address
+  
   set_progress(22.00)
   if has_managers:
     managers.there_are_any = True
@@ -204,6 +206,22 @@ fields:
       members[i].name_fields(person_or_business='unsure')
   - code: |
       members[i].address_fields(show_country=True)
+---
+id: business address
+sets:
+  - business[i].address.address
+question:  |
+  Principal Place of Business
+fields:
+  - Existing place: business[0].address
+    datatype: object
+    choices: 
+      - users[0].address 
+    object labeler: |
+      lambda y: y.on_one_line()
+    disable others: True
+  - code: |
+      business[0].address_fields(show_country=True)
 ---
 generic object: ALIndividual
 code: |
@@ -583,6 +601,7 @@ objects:
   - first_meeting_minutes: ALDocument.using(title="First Meeting Minutes", filename="First_Meeting_Minutes.pdf", enabled=True, has_addendum=False)
   - LLC_operating_agreement: ALDocument.using(title="LLC Operating Agreement", filename="LLC_operating_agreement.pdf", enabled=True, has_addendum=False)
   - members_ledger: ALTableDocument.using(title="Members Ledger", filename="ledger", enabled=True)
+  - business: ALPeopleList
 ---
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[LLC_form_attachment, LLC_extra_info, Consent_of_Registered_Agent_attachment, first_meeting_minutes, LLC_operating_agreement, members_ledger], filename="LLC_form_package.pdf", title="All forms to download for your records")
