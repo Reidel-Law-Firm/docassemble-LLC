@@ -71,9 +71,8 @@ code: |
   user_role = 'na'
   
   set_progress(11.00)
-  users.gather()
-  users[0].address.address
-  users[0].ssn
+  users.gather(complete_attribute = "gather_complete2")
+
   set_parts(subtitle=str(users))
   
   business[0].address.address
@@ -109,7 +108,7 @@ code: |
   interview_order_LLC_form
   # Save anonymized interview statistics (customize the saved data below)
   store_variables_snapshot(data={'zip': users[0].address.zip})
-  basic_questions_signature_flow
+  #basic_questions_signature_flow
   loading_warning_screen
   set_progress(100)
   LLC_form_publish
@@ -227,6 +226,15 @@ generic object: ALIndividual
 code: |
   x.name.first
   x.address.address
+  x.ssn
+  if x.ready_to_sign: 
+    x.signature
+  x.gather_complete2 = True
+---
+generic object: ALIndividual
+code: |
+  x.name.first
+  x.address.address
   x.gather_complete = True
 ---
 generic object: ALIndividual
@@ -234,6 +242,8 @@ code: |
   x.name.first
   x.address.address
   x.units
+  if x.ready_to_sign: 
+    x.signature
   x.gather_complete1 = True
 ---
 id: ready to sign
@@ -896,6 +906,11 @@ attachments:
           % else:
           ${ members[2].address.country }
           % endif
+      - "business_address_mailing": ${ business[0].address.address }
+      - "business_address_city": ${ business[0].address.city }
+      - "business_address_state": ${ business[0].address.state }
+      - "business_address_zip": ${ business[0].address.zip }
+      - "business_address_country": ${ business[0].address.country }
       - "organizer_name_full1": |
           Schuyler Reidel - Reidel Law Firm
       - "organizer_name_full2": |
