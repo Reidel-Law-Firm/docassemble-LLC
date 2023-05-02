@@ -99,7 +99,9 @@ code: |
   set_progress(95.00)
   review_LLC_form
   
-  basic_questions_signature_flow
+  for x in users + members:
+    if x.ready_to_sign:
+      x.special_signature_flow
   
   interview_order_LLC_form = True  
 ---
@@ -136,9 +138,7 @@ comment: |
 id: LLC
 continue button field: LLC_form_intro
 question: |
-  LLC
-subquestion: |
-  LLC information. TODO.
+  Complete your LLC Form.
 ---
 generic object: ALIndividual
 template: users[0].person_type_label
@@ -260,47 +260,127 @@ signature: x.signature
 required: False
 under: |
   ${x}
+#---
+#code: |
+#  signature_fields = ["users[0].signature"] + [sig.attr_name('signature') for sig in members if sig.ready_to_sign]
 ---
 # Triggers some questions to ask for signatures on either desktop or mobile
 # Allows sending via text/email
 id: basic questions signature flow control
 code: |
-  if started_on_phone:
-    saw_signature_choice = True
-    for x in users + members: 
-      if x.ready_to_sign:
-        x.signature 
-    # Add in logic for when we need additional signatures
-  else: 
-    # Three branches:
-    # 1. Decided to sign on the PC
-    # 2. Sent someone a link to sign the form
-    # 3. Used the QR code
-    saw_signature_choice
-    # Branch 1: PC
-    if signature_choice =='this device':
-      for x in users + members: 
-        if x.ready_to_sign:
-          x.signature 
-    # Check for Branch 2 or 3
-    elif signature_choice == 'phone':
-      saw_signature_qrcode
-      # User will click next. link_cell will only be defined if they chose the texting option
-      if defined('link_cell') and link_cell and task_not_yet_performed('send signature link'): 
-        # They used the text option
-        send_sms(task='send signature link', to=link_cell,template=interview_link)
-        signature_wait_screen
-        for x in users + members: 
-          if x.ready_to_sign:
-            x.signature       
-      else: # Branch 3: They used the QR Code. No special screen, just continue
-        for x in users + members: 
-          if x.ready_to_sign:
-            x.signature     
-      # Show the follow-up either way
-      if device().is_mobile:
-        signature_phone_followup
-  basic_questions_signature_flow = True
+  # Three branches:
+  # 1. Decided to sign on the PC
+  # 2. Sent someone a link to sign the form
+  # 3. Used the QR code
+  x.saw_signature_choice
+  # Branch 1: PC
+  if x.signature_choice == "sign_after_printing":
+    define(x.signature, DAEmpty())
+  elif x.signature_choice in ['this device', 'this_device']:
+    value(x.signature)    
+  # Check for Branch 2 or 3
+  elif x.signature_choice == 'phone':
+    x.saw_signature_qrcode
+    # User will click next. link_cell will only be defined if they chose the texting option
+    if defined('x.link_cell') and x.link_cell and task_not_yet_performed('send signature link'): 
+      # They used the text option
+      send_sms(task='send signature link', to=link_cell,template=interview_link)
+      x.signature_wait_screen
+      value(x.signature)
+    else: # Branch 3: They used the QR Code. No special screen, just continue
+      value(x.signature)
+    # Show the follow-up either way
+    if device().is_mobile:
+      #signed = False
+      #while not signed:
+      #  for signature in signature_fields:
+      #    signed = defined(signature) & signed
+      x.signature_phone_followup
+  x.special_signature_flow = True
+---
+comment: |
+  This block is shown when the user texts a link to sign a form
+id: signature wait screen
+question: |
+  % if defined(['x.signature']):
+  Thank you for signing.
+  % else:
+  Sign on your phone
+  % endif
+subquestion: |
+  % if device() and device().is_pc:
+  % if defined('x.signature'):
+  Click ${word("next")}.
+  % else:
+  Click ${word("next")} on this screen once you have finished signing on your phone.
+  % endif
+  % else:
+  You have been asked to sign this PDF. Click to review it.    
+  ${al_court_bundle.as_pdf('preview')}  
+  [Make changes](${url_action('review_all_sections')})
+
+  Click ${word("next")} on this screen when you're ready to sign.
+  % endif  
+field: x.signature_wait_screen
+decoration: file-signature
+---
+id: signature-phone
+question: |
+  Sign your forms  
+fields:
+  - note: |
+      1. Open the camera app or barcode reader app on your phone.
+      2. Point it at the screen.
+      3. Click the link icon that appears on the camera screen.
+      4. Click ${word("next")} on your phone.
+      
+      <center>
+      ${interview_url_as_qr()}
+      </center>
+
+      ${ collapse_template(help_using_qr_code_template) }
+    show if: 
+      code: |
+        device() and device().is_pc
+  - Text me a link instead: x.text_link
+    datatype: yesnowide
+    show if: 
+      code: |
+        device() and device().is_pc
+  - label: Cell phone number
+    field: x.link_cell
+    show if: x.text_link
+  - note: |
+      Click ${word("next")} to add your signature.
+    show if: 
+      code: |
+        device() and not device().is_pc
+continue button field: x.saw_signature_qrcode
+---
+id: signature phone followup
+question: |
+  Continue on the device you started the interview on
+subquestion: |
+  Thank you for signing. You can close this browser on your phone.
+  Keep going on the computer you started the interview on.
+field: x.signature_phone_followup  
+---
+id: signature choice
+decoration: file-signature
+question: |
+  Your documents are almost ready
+subquestion: |
+  How do you want to sign them?
+fields: 
+  - I will sign: x.signature_choice
+    input type: radio
+    choices:
+      - On a phone with my finger: phone
+        help: |
+          We can text or share a link with your phone on the next screen
+      - On a computer with my mouse: this_device
+      - On the paper with a pen after I print the documents: sign_after_printing
+continue button field: x.saw_signature_choice
 ---
 id: members shares
 generic object: ALIndividual
@@ -594,9 +674,6 @@ content: |
   ```
   ${ str(publish_error) }
   ```
----
-code: |
-  signature_fields = ["users[0].signature"] + [sig.attr_name('signature') for sig in members if sig.ready_to_sign]
 ---
 objects:
   - LLC_form_attachment: ALDocument.using(title="LLC Form", filename="201_boc.pdf", enabled=True, has_addendum=True)

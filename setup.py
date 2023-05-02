@@ -44,7 +44,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.LLC',
-      version='2.3.8',
+      version='2.3.9',
       description=('LLC'),
       long_description='# docassemble.LLC\r\n\r\nLLC\r\n\r\n## Schuyler "Rocky" Reidel\r\n\r\nadmin@docs.reidellawfirm.com\r\n\r\n',
       long_description_content_type='text/markdown',
