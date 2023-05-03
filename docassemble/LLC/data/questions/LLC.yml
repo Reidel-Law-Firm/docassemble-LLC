@@ -99,11 +99,19 @@ code: |
   set_progress(95.00)
   review_LLC_form
   
+  special_signature_flow_gathered
+  
+  interview_order_LLC_form = True  
+---
+#code: |
+#  signors = [x for x in users + members if x.ready_to_sign]
+---
+generic object: ALIndividual
+code: |
   for x in users + members:
     if x.ready_to_sign:
       x.special_signature_flow
-  
-  interview_order_LLC_form = True  
+  special_signature_flow_gathered = True
 ---
 ###################### Main order ######################
 mandatory: True
@@ -160,7 +168,7 @@ sets:
   - users[0].name.first
   - users[0].name.last
 question:  |
-  Your Registered Agent Information
+  Your Information as Registered Agent
 fields:
   - code: |
       users[0].name_fields(person_or_business='unsure')
@@ -267,6 +275,7 @@ under: |
 # Triggers some questions to ask for signatures on either desktop or mobile
 # Allows sending via text/email
 id: basic questions signature flow control
+generic object: ALIndividual
 code: |
   # Three branches:
   # 1. Decided to sign on the PC
@@ -277,18 +286,18 @@ code: |
   if x.signature_choice == "sign_after_printing":
     define(x.signature, DAEmpty())
   elif x.signature_choice in ['this device', 'this_device']:
-    value(x.signature)    
+    x.signature 
   # Check for Branch 2 or 3
   elif x.signature_choice == 'phone':
     x.saw_signature_qrcode
-    # User will click next. link_cell will only be defined if they chose the texting option
-    if defined('x.link_cell') and x.link_cell and task_not_yet_performed('send signature link'): 
+    # User will click next. x.link_cell will only be defined if they chose the texting option
+    if x.link_cell and task_not_yet_performed('send signature link'): 
       # They used the text option
-      send_sms(task='send signature link', to=link_cell,template=interview_link)
+      send_sms(task='send signature link', to=x.link_cell, template=x.interview_link)
       x.signature_wait_screen
-      value(x.signature)
+      x.signature
     else: # Branch 3: They used the QR Code. No special screen, just continue
-      value(x.signature)
+      x.signature
     # Show the follow-up either way
     if device().is_mobile:
       #signed = False
@@ -296,27 +305,29 @@ code: |
       #  for signature in signature_fields:
       #    signed = defined(signature) & signed
       x.signature_phone_followup
+      
   x.special_signature_flow = True
 ---
 comment: |
   This block is shown when the user texts a link to sign a form
 id: signature wait screen
+generic object: ALIndividual
 question: |
-  % if defined(['x.signature']):
+  % if x.signature:
   Thank you for signing.
   % else:
   Sign on your phone
   % endif
 subquestion: |
   % if device() and device().is_pc:
-  % if defined('x.signature'):
+  % if x.signature:
   Click ${word("next")}.
   % else:
   Click ${word("next")} on this screen once you have finished signing on your phone.
   % endif
   % else:
   You have been asked to sign this PDF. Click to review it.    
-  ${al_court_bundle.as_pdf('preview')}  
+  ${al_user_bundle.as_pdf('preview')}  
   [Make changes](${url_action('review_all_sections')})
 
   Click ${word("next")} on this screen when you're ready to sign.
@@ -325,6 +336,7 @@ field: x.signature_wait_screen
 decoration: file-signature
 ---
 id: signature-phone
+generic object: ALIndividual
 question: |
   Sign your forms  
 fields:
@@ -358,6 +370,7 @@ fields:
 continue button field: x.saw_signature_qrcode
 ---
 id: signature phone followup
+generic object: ALIndividual
 question: |
   Continue on the device you started the interview on
 subquestion: |
@@ -365,7 +378,18 @@ subquestion: |
   Keep going on the computer you started the interview on.
 field: x.signature_phone_followup  
 ---
+generic object: ALIndividual
+template: x.interview_link
+content: |
+  Hi, ${ x },
+  
+  ${ users[0] } sent you a form from the Reidel Law Firm. To sign the form,
+  tap the link below:  
+  
+  ${interview_url()}
+---
 id: signature choice
+generic object: ALIndividual
 decoration: file-signature
 question: |
   Your documents are almost ready
