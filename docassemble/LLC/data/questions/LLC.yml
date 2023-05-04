@@ -106,11 +106,11 @@ code: |
 #code: |
 #  signors = [x for x in users + members if x.ready_to_sign]
 ---
-generic object: ALIndividual
+#generic object: ALIndividual
 code: |
-  for x in users + members:
-    if x.ready_to_sign:
-      x.special_signature_flow
+  for signor in users + members:
+    if signor.ready_to_sign:
+      signor.special_signature_flow
   special_signature_flow_gathered = True
 ---
 ###################### Main order ######################
